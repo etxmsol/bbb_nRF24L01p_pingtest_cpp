@@ -1,0 +1,2 @@
+lcd C:\bb\WorkspaceSmartH\pingtest_bbb\Debug
+put pingtest_bbb
