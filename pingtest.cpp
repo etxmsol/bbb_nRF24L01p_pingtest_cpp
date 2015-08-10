@@ -17,26 +17,13 @@
 
 #include <cstdlib>
 #include <iostream>
-
-#include "../librf24/RF24.h"
-
-//
-// Hardware configuration
-//
-
-RF24 radio(115, 117);
-
+#include <stdio.h>
+#include <RF24_Impl.h>
+#include <compatibility.h>
 
 // sets the role of this unit in hardware.  Connect to GND to be the 'pong' receiver
 // Leave open to be the 'ping' transmitter
 const int role_pin = 7;
-
-//
-// Topology
-//
-
-// Radio pipe addresses for the 2 nodes to communicate.
-const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xD0D0D0D0D0LL };
 
 //
 // Role management
@@ -57,180 +44,121 @@ const char* role_friendly_name[] = { "invalid", "Ping out", "Pong back"};
 // The role of the current running sketch
 role_e role;
 
-void setup(void)
-{
-  //
-  // Role
-  //
 
-  // set up the role pin
- // pinMode(role_pin, INPUT);
-  //digitalWrite(role_pin,HIGH);
- // delay(20); // Just to get a solid reading on the role pin
-
-  // read the address pin, establish our role
-  //if ( ! digitalRead(role_pin) )
-    role = role_ping_out;
-  //else
-  //  role = role_pong_back;
-
-  //
-  // Print preamble:
-  //
-
-  //Serial.begin(115200);
-  //printf_begin();
-  printf("\n\rRF24/examples/pingpair/\n\r");
-  printf("ROLE: %s\n\r",role_friendly_name[role]);
-
-  //
-  // Setup and configure rf radio
-  //
-
-  radio.begin();
-
-  // optionally, increase the delay between retries & # of retries
-  radio.setRetries(15,15);
-
-  // optionally, reduce the payload size.  seems to
-  // improve reliability
-//  radio.setPayloadSize(8);
- radio.setChannel(10);
- radio.setPALevel(RF24_PA_MAX);
- radio.setAutoAck(true);
-     //radio.setDataRate(RF24_250KBPS);
-  //
-  // Open pipes to other nodes for communication
-  //
-
-  // This simple sketch opens two pipes for these two nodes to communicate
-  // back and forth.
-  // Open 'our' pipe for writing
-  // Open the 'other' pipe for reading, in position #1 (we can have up to 5 pipes open for reading)
-
-  if ( role == role_ping_out )
-  {
-    radio.openWritingPipe(pipes[0]);
-    radio.openReadingPipe(1,pipes[1]);
-  }
-  else
-  {
-    radio.openWritingPipe(pipes[1]);
-    radio.openReadingPipe(1,pipes[0]);
-  }
-
-  //
-  // Start listening
-  //
-
-  radio.startListening();
-
-  //
-  // Dump the configuration of the rf unit for debugging
-  //
-
-  radio.printDetails();
-}
-
-void loop(void)
-{
-  //
-  // Ping out role.  Repeatedly send the current time
-  //
-
-  if (role == role_ping_out)
-  {
-    // First, stop listening so we can talk.
-    radio.stopListening();
-
-    // Take the time, and send it.  This will block until complete
-    unsigned long time = __millis();
-    printf("Now sending %lu...",time);
-    bool ok = radio.write( &time, sizeof(unsigned long) );
-    printf("sizeof = %d\n", sizeof(unsigned long));
-    if (ok)
-      printf("ok...");
-    else
-      printf("failed.\n\r");
-
-    // Now, continue listening
-    radio.startListening();
-
-    // Wait here until we get a response, or timeout (250ms)
-    unsigned long started_waiting_at = __millis();
-    bool timeout = false;
-    while ( ! radio.available() && ! timeout ) {
-	// by bcatalin » Thu Feb 14, 2013 11:26 am 
-	__msleep(5); //add a small delay to let radio.available to check payload
-      if (__millis() - started_waiting_at > 200 )
-        timeout = true;
-    }
-
-    // Describe the results
-    if ( timeout )
-    {
-      printf("Failed, response timed out.\n\r");
-    }
-    else
-    {
-      // Grab the response, compare, and send to debugging spew
-      unsigned long got_time;
-      radio.read( &got_time, sizeof(unsigned long) );
-
-      // Spew it
-      printf("Got response %lu, round-trip delay: %lu\n\r",got_time,__millis()-got_time);
-    }
-
-    // Try again 1s later
-//    delay(1000);
-sleep(1);
-  }
-
-  //
-  // Pong back role.  Receive each packet, dump it out, and send it back
-  //
-
-  if ( role == role_pong_back )
-  {
-    // if there is data ready
-    if ( radio.available() )
-    {
-      // Dump the payloads until we've gotten everything
-      unsigned long got_time;
-      bool done = false;
-      while (!done)
-      {
-        // Fetch the payload, and see if this was the last one.
-        done = radio.read( &got_time, sizeof(unsigned long) );
-
-        // Spew it
-        printf("Got payload %lu...",got_time);
-
-	// Delay just a little bit to let the other unit
-	// make the transition to receiver
-	delay(20);
-      }
-
-      // First, stop listening so we can talk
-      radio.stopListening();
-
-      // Send the final one back.
-      printf("Sent response.\n\r");
-      radio.write( &got_time, sizeof(unsigned long) );
-
-      // Now, resume listening so we catch the next packets.
-      radio.startListening();
-    }
-  }
-}
 
 int main(int argc, char** argv)
 {
-        setup();
-        while(1)
-                loop();
+	RF24_Impl rf24;
 
-        return 0;
+    role = role_ping_out;
+
+    printf("\n\rRF24/examples/pingpair/\n\r");
+    printf("ROLE: %s\n\r",role_friendly_name[role]);
+
+    rf24.begin();
+
+    rf24.setRetries(15,15);
+
+    rf24.setChannel(10);
+	rf24.setPALevel(RF24_PA_MAX);
+	rf24.setAutoAck(true);
+
+
+	rf24.startListening();
+
+	  //
+	  // Dump the configuration of the rf unit for debugging
+	  //
+
+	rf24.printDetails();
+
+	while(1)
+	{
+	  if (role == role_ping_out)
+	  {
+		// First, stop listening so we can talk.
+		rf24.stopListening();
+
+		// Take the time, and send it.  This will block until complete
+		unsigned long time = __millis();
+		printf("Now sending %lu...",time);
+		bool ok = rf24.write( &time, sizeof(unsigned long) );
+		printf("sizeof = %d\n", sizeof(unsigned long));
+		if (ok)
+		  printf("ok...");
+		else
+		  printf("failed.\n\r");
+
+		// Now, continue listening
+		rf24.startListening();
+
+		// Wait here until we get a response, or timeout (250ms)
+		unsigned long started_waiting_at = __millis();
+		bool timeout = false;
+		while ( ! rf24.available() && ! timeout ) {
+		__msleep(5); //add a small delay to let radio.available to check payload
+		  if (__millis() - started_waiting_at > 200 )
+			timeout = true;
+		}
+
+		// Describe the results
+		if ( timeout )
+		{
+		  printf("Failed, response timed out.\n\r");
+		}
+		else
+		{
+		  // Grab the response, compare, and send to debugging spew
+		  unsigned long got_time;
+		  rf24.read( &got_time, sizeof(unsigned long) );
+
+		  // Spew it
+		  printf("Got response %lu, round-trip delay: %lu\n\r",got_time,__millis()-got_time);
+		}
+
+		// Try again 1s later
+		//    delay(1000);
+		sleep(1);
+	  }
+
+	  //
+	  // Pong back role.  Receive each packet, dump it out, and send it back
+	  //
+
+	  if ( role == role_pong_back )
+	  {
+		// if there is data ready
+		if ( rf24.available() )
+		{
+		  // Dump the payloads until we've gotten everything
+		  unsigned long got_time;
+		  bool done = false;
+		  while (!done)
+		  {
+			// Fetch the payload, and see if this was the last one.
+			done = rf24.read( &got_time, sizeof(unsigned long) );
+
+			// Spew it
+			printf("Got payload %lu...",got_time);
+
+		// Delay just a little bit to let the other unit
+		// make the transition to receiver
+			__msleep(20);
+		  }
+
+		  // First, stop listening so we can talk
+		  rf24.stopListening();
+
+		  // Send the final one back.
+		  printf("Sent response.\n\r");
+		  rf24.write( &got_time, sizeof(unsigned long) );
+
+		  // Now, resume listening so we catch the next packets.
+		  rf24.startListening();
+		}
+	  }
+	}
+	return 0;
 }
 
 

@@ -24,4 +24,26 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>RF24/RF24.cpp</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/Users/Mikhail/eclipse.workspaces/nRF24l01+/RF24/RF24.cpp</locationURI>
+		</link>
+		<link>
+			<name>RF24/RF24.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/Users/Mikhail/eclipse.workspaces/nRF24l01+/RF24/RF24.h</locationURI>
+		</link>
+		<link>
+			<name>RF24/RF24_config.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/Users/Mikhail/eclipse.workspaces/nRF24l01+/RF24/RF24_config.h</locationURI>
+		</link>
+		<link>
+			<name>RF24/nRF24L01.h</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/Users/Mikhail/eclipse.workspaces/nRF24l01+/RF24/nRF24L01.h</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>
